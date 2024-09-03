@@ -1,0 +1,93 @@
+body {
+    font-family: 'Kanit';
+    overflow-x: hidden;
+    width: auto !important;
+    min-width: 560px;
+}
+
+td {
+    border: 0px;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+#page-title {
+    position: absolute;
+    left: 3.05%;
+    right: 80.47%;
+    top: 21.13%;
+    bottom: 26.76%;
+
+    font-family: 'Kanit';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 24px;
+    line-height: 156%;
+
+    /* or 37px */
+    letter-spacing: 0.06em;
+
+    color: #FFFFFF;
+}
+
+#metamask-connect {
+    padding: 8px 16px;
+    margin-left: 10px;
+
+    background: #EB7A29;
+    border-radius: 2px;
+}
+
+#metamask-text {
+    /* width: 115px; */
+    height: 18px;
+    
+    font-family: 'Kanit';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 18px;
+    
+    /* identical to box height */
+    
+    color: #FFFFFF;
+    
+    
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0
+}
+
+.clickable-row {
+    cursor:pointer;
+}
+.clickable-row:hover {
+    background-color: bisque;
+}
+
+.btn-light:hover, .btn-white:hover {
+    background-color: bisque;
+} 
+/* 
+.btn-light:active:focus, .btn-light:focus, .btn-white:active:focus, .btn-white:focus {
+    outline: none;
+    box-shadow: none;
+}
+ */
+
+.btn:focus, .form-select:focus, .form-control:focus {
+    /* outline: none; */
+    outline: auto;
+    outline-width: 1px;
+    outline-color: bisque;
+    box-shadow: none;
+}
+
+
+.myShadow {
+    /* box-shadow: [h-offset] [v-offset] [blur-radius] [spread-radius] [color] */
+    box-shadow: 0 2px 1px -1px lightgray;
+}

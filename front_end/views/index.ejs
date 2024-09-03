@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="pt-br">
+	<title>Cartesi Rollups Dapp</title>
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/png" href="assets/images/bus-icon.png"/>
+    
+
+    <!-- Bootstrap -->
+    <link href="bootstrap-5.1.3-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="bootstrap-5.1.3-dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+    integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+    crossorigin=""/>
+
+    <!-- Leaflet Javacript (Make sure you put this AFTER Leaflet's CSS) -->
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+    integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+    crossorigin=""></script>
+    
+    <!-- AJAX -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+
+    <!-- Chart JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
+
+
+    <!-- Web3 -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+
+    <!-- My custom css -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<!-- Schedule Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" role="dialog" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header d-block">
+                <div class="d-flex">
+                    <h5 class="modal-title fw-bold" id="scheduleModalLabel">Upload Bus Schedule</h5>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-white py-2 px-3 float-end material-icons fs-6 ms-auto">close</button>    
+                </div>
+                
+                <small class="modal-title text-muted d-block">Load Schedule From JSON file</small>
+
+            </div>
+
+            <!-- BEGIN FORM -->
+            <form>
+
+                <!-- BEGIN MODAL BODY -->
+                <div class="modal-body">
+                    <div class="">
+                        <input class="form-control" type="file" accept=".json" id="scheduleFile" onchange="loadFileContent()">
+                    </div>        
+                <!-- END MODAL BODY -->
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="text-center">
+                        <button type="submit" id="schedule-btn-submit" class="btn btn-light text-center" onclick="scheduleSubmit()">Submit</button>
+                    </div>
+                </div>
+            
+            <!-- END FORM -->                 
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header d-block">
+                <div class="d-flex">
+                    <h5 class="modal-title fw-bold" id="filterModalLabel">Fines's Filter</h5>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-white py-2 px-3 float-end material-icons fs-6 ms-auto">close</button>    
+                </div>
+                
+                <small class="modal-title text-muted d-block">Choose the filters necessary for your search</small>
+
+            </div>
+
+            <!-- BEGIN FORM -->
+            <form action="/" method="post" >
+
+                <!-- BEGIN MODAL BODY -->
+                <div class="modal-body">
+                    <div class="modal-body">
+                        <div class="form-floating mb-3">
+                            <% if (filter_options.filterBusLine) { %>
+                                <input type="text" class="form-control" id="filterBusLine" name="filterBusLine" value=<%= filter_options.filterBusLine %>>
+                            <% } else { %>
+                                <input type="text" class="form-control" id="filterBusLine" name="filterBusLine" value="">
+                            <% } %>
+                            <label for="filterBusLine">Filter by Bus Line</label>
+                        </div>
+                
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="fineTypeSelector" name="fineTypeSelector" aria-label="Fine Select Filter">
+                                <% if (filter_options.fineTypeSelector) { %>
+                                    <% let options = {"0": "All", "1": "Out of Route", "2": "Late", "3": "Lateration", "4": "Distance"} %>
+                                    <% for (k in options) { %>
+                                        <% if (filter_options.fineTypeSelector == k) { %>
+                                            <option value=<%= k %> selected> <%= options[k] %> </option>
+                                        <% } else { %>
+                                            <option value=<%= k %> > <%= options[k] %> </option>
+                                        <% } %>            
+                                    <% } %>
+                                <% } else { %>
+                                    <option value="0" selected>All</option>
+                                    <option value="1">Out of Route</option>
+                                    <option value="2">Late</option>
+                                    <option value="3">Lateration</option>
+                                    <option value="4">Distance</option>
+                                <% } %>
+                            </select>
+                            <label for="fineTypeSelector">Fine Type</label>
+                        </div>
+                        
+
+                    </div>
+                
+                <!-- END MODAL BODY -->
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-secondary mb-3" data-bs-dismiss="modal" name="submitButton" value="0">Clear</button>
+                    <button type="submit" class="btn btn-primary mb-3" data-bs-dismiss="modal" name="submitButton" value="1">Filter</button>
+                </div>
+            
+            <!-- END FORM -->                 
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Add Fine Modal -->
+<div class="modal fade" id="fineModal" tabindex="-1" role="dialog" aria-labelledby="fineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header d-block">
+                <div class="d-flex">
+                    <h5 class="modal-title fw-bold" id="fineModalLabel">Send Trip Info</h5>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-white py-2 px-3 float-end material-icons fs-6 ms-auto">close</button>    
+                </div>
+                
+                <small class="modal-title text-muted d-block">Submit a trip info</small>
+
+            </div>
+
+            <!-- BEGIN FORM -->
+            <!-- <form action="/submit" method="post"> -->
+            <form>
+
+                <!-- BEGIN MODAL BODY -->
+                <div class="modal-body">
+                    <div class="mb-3 row">
+
+                        <!-- <div class="form-floating col">
+                            <input type="text" class="form-control" id="fineModalBusId" name="bus_id" value="">
+                            <label for="fineModalBusId">Bus Line</label>
+                        </div> -->
+                        <div class="form-floating col">
+                            <select class="form-select" id="fineModalBusId" name="bus_id" aria-label="Fine Bus Id">
+                            </select>
+
+                            <label class="ms-1" for="fineModalBusId">Bus Line</label>
+                        </div>
+
+                        <!-- <div class="form-floating col">
+                            <input type="text" class="form-control" id="fineModalTripId" name="trip_id" value="">
+                            <label for="fineModalTripId">Trip Id</label>
+                        </div> -->
+                        <div class="form-floating col">
+                            <select class="form-select" id="fineModalTripId" name="trip_id" aria-label="Bus Line Trip">
+                            </select>
+
+                            <label class="ms-1" for="fineModalTripId">Trip</label>
+                        </div>
+                    </div>
+
+                    <div class="form-floating has-validation mb-3">
+                        <input type="text" class="form-control" id="fineModalTimestamp" name="ts" value="" data-toggle="tooltip" data-placement="bottom" title="YYYY-mm-dd HH:MM:SS">
+                        <label class="ps-1" for="fineModalTimestamp">Timestamp</label>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-floating col">
+                            <input type="text" class="form-control" id="fineModalLat" name="lat" value="" readonly>
+                            <label class="ms-1" for="fineModalLat">Latitude</label>
+                        </div>
+
+                        <div class="form-floating col">
+                            <input type="text" class="form-control disabled" id="fineModalLng" name="lon" value="" readonly>
+                            <label class="ms-1" for="fineModalLng">Longitude</label>
+                        </div>
+                    </div>
+
+                <!-- END MODAL BODY -->
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="text-center">
+                        <button type="submit" id="fine-btn-submit" class="btn btn-light text-center" onclick="fineSubmit()">Submit</button>
+                    </div>
+                </div>
+            
+            <!-- END FORM -->                 
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- <body id="home" style="padding-top: 70px;"> -->
+<body id="home">
+
+    <nav class="navbar" style="height: 71px; background-color: #212529; border-bottom: 5px solid; border-color: #EB7A29;">
+        <div class="ms-5" style="font-size: 24px; color: #FFFFFF; letter-spacing: 0.06em;">
+            IoT Rollups DApp
+        </div>
+
+    </nav>
+
+    <div class="row m-5" style="position: relative; z-index: 0">
+        <div class="col-md-auto col-sm-12 p-0 me-4">
+            <div style="background: #FFFFFF; border: 1px solid #E8E8E8; box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.08);">
+                <div class="p-2">
+                    <ul class="list-group list-group-horizontal mb-1">
+                        <li class="list-group-item border-0 flex-fill p-0">
+                            <div class="fs-3 fw-bold p-0 m-0">
+                                Fines's Table
+                            </div>
+                            
+                        </li>
+
+                        <li class="list-group-item border-0 p-0 ms-5">
+                            <ul class="myShadow list-group list-group-horizontal">
+                                <li class="list-group-item border-0 p-0 me-auto">
+                                    <!-- Button trigger modal schedule -->
+                                    <button type="button" title="Upload Bus Schedule" class="btn btn-white material-icons fs-6" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                                        upload
+                                    </button>
+                                </li>
+        
+        
+                                <li class="list-group-item border-0 p-0 me-auto">
+                                    <!-- Button to open/close histogram graph -->
+                                    <button type="button" id="histogram_btn" title="Histogram" class="btn btn-white material-icons fs-6">
+                                        bar_chart
+                                    </button>
+                                </li>
+        
+                                <li class="list-group-item border-0 p-0 me-auto">
+                                    <!-- Button to open/close time-series graph -->
+                                    <button type="button" id="timeSeries_btn" title="Time Series" class="btn btn-white material-icons fs-6">
+                                        trending_up
+                                    </button>
+                                </li>
+        
+                                <li class="list-group-item border-0 p-0 me-auto">
+                                    <!-- Button trigger modal filter -->
+                                    <button type="button" title="Filter" class="btn btn-white material-icons fs-6" data-bs-toggle="modal" data-bs-target="#filterModal">
+                                        filter_alt
+                                    </button>
+                                </li>
+        
+                                <li class="list-group-item border-0 p-0 me-auto">
+                                    <!-- Button trigger modal schedule -->
+                                    <button type="button" title="Clear Map" class="btn btn-white material-icons fs-6" onclick="clear_map()">
+                                        clear
+                                    </button>
+                                </li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </div>
+
+                <table id="finesTable" class="table table-striped m-0 border-bottom border-1">
+                    <thead>
+                        <tr>
+                            <th scope="col">Bus Line</th>
+                            <th scope="col" class="text-center">Timestamp</th>
+                            <th colspan="2" scope="col" class="text-end">Fine Value (R$)</th>
+                        </tr>
+                    </thead>
+                    
+                    <!-- Notices -->
+                    <tbody id="finesTableBody" style="border: 0px;">
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div id="pagination" class="row">
+                    <div id="pagenationInfo" class="col-6 text-center">
+                    </div>
+    
+                    <nav aria-label="Page navigation" class="col-6">
+                        <ul id="paginationList" class="pagination justify-content-center m-0">
+                        </ul>
+                    </nav>
+    
+                </div>
+        
+            </div>
+        </div>
+
+        <div id="map" class="col" style="border: 1px solid #E8E8E8; border-radius: 10px;"></div>
+
+    </div>
+
+    <div id="histogram" style="width: 450px;position: absolute; z-index: 1" class="card p-4 visually-hidden">
+        <div id="histogramHeader" class="card-header bg-white p-0 border-0 mb-4" style="cursor: move">
+            <div class="row">
+                <div class="col-9">
+                    <p class="p-0 m-0 fw-bold fs-4">Qty of Bus Fines<br></p>
+                    <small>Per lines (Fines x Bus lines)</small>
+                </div>
+
+                <div class="col">
+                    <button type="button" id="histogram_btn_minimize" class="btn btn-white p-3 float-end material-icons fs-6">close</button>
+                </div>    
+            </div>
+        </div>
+
+        <div id="histogramBody" class="card-body p-0">
+            <canvas id="histogramChart"></canvas>
+        </div>            
+    </div>
+
+    <div id="timeSeries" style="width: 650px;position: absolute; z-index: 1" class="card p-4 visually-hidden">
+        <div id="timeSeriesHeader" class="card-header bg-white p-0 border-0 mb-4" style="cursor: move">
+            <!-- <button type="button" id="timeSeries_btn_minimize" class="btn btn-light py-0 float-end">&mdash;</button> -->
+            <div class="row">
+                <div class="col-9">
+                    <p class="p-0 m-0 fw-bold fs-4">Fines's Values (avg)<br></p>
+                    <small>(Fines Value x Date)</small>
+                </div>
+
+                <div class="col">
+                    <button type="button" id="timeSeries_btn_minimize" class="btn btn-white p-3 float-end material-icons fs-6">close</button>
+                </div>    
+            </div>
+        </div>
+
+        <div id="timeSeriesBody" class="card-body p-0">
+            <canvas id="timeSeriesChart"></canvas>
+        </div>            
+    </div>
+    
+</body>
+</html>
+
+<script src="js/util.js"></script>
+<script src="js/appUI.js"></script>
+<script src="js/chart_control.js"></script>
+<script src="js/connection.js"></script>
+<script src="js/map_control.js"></script>
+<script src="js/table_control.js"></script>
+<script>
+    var filter_options = JSON.parse('<%-JSON.stringify(filter_options)%>')
+    var notices_table = JSON.parse('<%-JSON.stringify(notices_table)%>')
+    var back_end_chainid = '<%-chainid%>'
+    var metamask_conn_config = JSON.parse('<%-metamask_conn_config%>')
+    var user_account = null // metamask account
+    var web3 = null // web3 object, used to call contracts methods
+    var input_contract = null
+    //console.log(metamask_conn_config)
+
+
+    var appUI = new AppUI("map", 
+        {
+            "div_id": "histogram",
+            "btn_minimize_id": "histogram_btn_minimize", // close
+            "btn_id": "histogram_btn", // open/close
+            "div_width": 450
+        },
+        {
+            "div_id": "timeSeries",
+            "btn_minimize_id": "timeSeries_btn_minimize", // close
+            "btn_id": "timeSeries_btn", // open/close
+            "div_width": 650
+        },
+    )
+
+    init_map()
+    //build_table("finesTable", "paginationList", "pagenation")
+    build_table("finesTable", "pagination")
+
+    var barChart = new ChartControl("histogramChart",
+        {
+            "type": 'bar',
+            "options": {
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 18,
+                                weight: "bold"
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: false,
+                        text: 'Qty of Bus Fines',
+                        align: "start",
+                        font: {
+                            size: 14,
+                            family: "Kanit",
+                        }
+                    },
+                    subtitle: {
+                        display: false,
+                        text: 'Per lines (Fines x Bus lines)',
+                        align: "start"
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+            }
+        },
+        JSON.parse('<%-hist%>') // histogram data sent by NodeJS
+    )
+
+    var timeSeriesChart = new ChartControl("timeSeriesChart",
+        {
+            "type": 'line',
+            "options": {
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 18,
+                                weight: "bold"
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: false,
+                        text: "Fines's Values(avg)"
+                    },
+                    legend: {
+                        display: true,
+                        position: "bottom",
+                        labels: {
+                            textAlign: "right"
+                        }
+                    }
+                }
+            }
+        },
+        JSON.parse('<%-ts%>') // time Series data sent by NodeJS
+    )
+
+</script>
